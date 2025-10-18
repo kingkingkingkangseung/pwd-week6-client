@@ -1,109 +1,59 @@
+// src/contexts/AuthContext.jsx
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authApi } from '../services/authApi';
+import axios from 'axios';
 
 const AuthContext = createContext();
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
-
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 자동 로그인 상태 확인
+  // ✅ Axios 인스턴스
+  const api = axios.create({
+    baseURL: import.meta.env.VITE_API_BASE_URL || 'https://pwd-week6-server-36mc.onrender.com/api',
+    withCredentials: true, // ✅ 세션 쿠키 포함
+  });
+
+  // ✅ 로그인 상태 확인
   const checkAuthStatus = async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      const response = await authApi.getCurrentUser();
-      if (response.data.success) {
-        setUser(response.data.user);
-        setIsAuthenticated(true);
+      const res = await api.get('/auth/me');
+      if (res.data?.authenticated) {
+        setUser(res.data.user);
       } else {
         setUser(null);
-        setIsAuthenticated(false);
       }
-    } catch (error) {
-      console.error('인증 상태 확인 실패:', error);
+    } catch (err) {
       setUser(null);
-      setIsAuthenticated(false);
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // ✅ 이거 없으면 Dashboard 무한 로딩
     }
   };
 
-  // 로그인
-  const login = async (email, password) => {
-    try {
-      const response = await authApi.login(email, password);
-      if (response.data.success) {
-        // 세션 갱신을 위해 서버 상태 재확인
-        await checkAuthStatus();
-        return { success: true };
-      } else {
-        return { success: false, message: response.data.message };
-      }
-    } catch (error) {
-      return { success: false, message: '로그인 중 오류가 발생했습니다.' };
-    }
-  };
-
-  // 회원가입
-  const register = async (name, email, password) => {
-    try {
-      const response = await authApi.register(name, email, password);
-      if (response.data.success) {
-        await checkAuthStatus();
-        return { success: true };
-      } else {
-        return { success: false, message: response.data.message };
-      }
-    } catch (error) {
-      return { success: false, message: '회원가입 중 오류가 발생했습니다.' };
-    }
-  };
-
-  // 로그아웃
+  // ✅ 로그아웃
   const logout = async () => {
     try {
-      await authApi.logout();
-    } catch (error) {
-      console.error('로그아웃 오류:', error);
-    } finally {
+      await api.post('/auth/logout');
       setUser(null);
-      setIsAuthenticated(false);
+    } catch (err) {
+      console.error('Logout failed:', err);
     }
   };
 
-  // 관리자 권한 확인
-  const isAdmin = () => {
-    return user && user.userType === 'admin';
-  };
+  // ✅ 관리자 여부 판단
+  const isAdmin = () => user?.userType === 'admin';
 
-  // 컴포넌트 마운트 시 인증 상태 확인
   useEffect(() => {
     checkAuthStatus();
   }, []);
 
-  const value = {
-    user,
-    isAuthenticated,
-    isLoading,
-    login,
-    register,
-    logout,
-    isAdmin,
-    checkAuthStatus
-  };
-
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, isLoading, checkAuthStatus, logout, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );
 };
+
+// ✅ useAuth 훅
+export const useAuth = () => useContext(AuthContext);
