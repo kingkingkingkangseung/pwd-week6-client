@@ -42,8 +42,8 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await authApi.login(email, password);
       if (response.data.success) {
-        setUser(response.data.user);
-        setIsAuthenticated(true);
+        // 세션 갱신을 위해 서버 상태 재확인
+        await checkAuthStatus();
         return { success: true };
       } else {
         return { success: false, message: response.data.message };
@@ -58,8 +58,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await authApi.register(name, email, password);
       if (response.data.success) {
-        setUser(response.data.user);
-        setIsAuthenticated(true);
+        await checkAuthStatus();
         return { success: true };
       } else {
         return { success: false, message: response.data.message };
