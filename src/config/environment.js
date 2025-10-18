@@ -1,19 +1,48 @@
-// 환경별 설정 관리
-const environment = {
-  // API URL 설정
-  API_URL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
-  
-  // 클라이언트 URL 설정
-  CLIENT_URL: import.meta.env.VITE_CLIENT_URL || 'http://localhost:5173',
-  
-  // 환경 모드
-  NODE_ENV: import.meta.env.NODE_ENV || 'development',
-  
-  // 개발 환경 여부
-  isDevelopment: import.meta.env.NODE_ENV === 'development',
-  
-  // 프로덕션 환경 여부
-  isProduction: import.meta.env.NODE_ENV === 'production'
+// src/config/environment.js
+const getEnvironmentConfig = () => {
+  const isDevelopment = import.meta.env.DEV;
+  const isProduction = import.meta.env.PROD;
+
+  const config = {
+    development: {
+      apiUrl: 'http://localhost:5000',
+      clientUrl: 'http://localhost:5173',
+    },
+    production: {
+      apiUrl:
+        import.meta.env.VITE_API_URL ??
+        'https://pwd-week6-server.onrender.com',
+      clientUrl:
+        import.meta.env.VITE_CLIENT_URL ??
+        'https://pwd-week6-client.vercel.app',
+    },
+  };
+
+  // 환경변수가 있을 경우 우선 적용
+  if (import.meta.env.VITE_API_URL) {
+    config.development.apiUrl = import.meta.env.VITE_API_URL;
+    config.production.apiUrl = import.meta.env.VITE_API_URL;
+  }
+
+  if (import.meta.env.VITE_CLIENT_URL) {
+    config.development.clientUrl = import.meta.env.VITE_CLIENT_URL;
+    config.production.clientUrl = import.meta.env.VITE_CLIENT_URL;
+  }
+
+  return isDevelopment ? config.development : config.production;
 };
 
-export { environment };
+const env = getEnvironmentConfig();
+export default env;
+
+// Named export
+export const { apiUrl, clientUrl } = env;
+
+// ✅ 개발환경에서만 로그
+if (import.meta.env.DEV) {
+  console.log('🌍 Environment Config:', {
+    mode: import.meta.env.MODE,
+    apiUrl: env.apiUrl,
+    clientUrl: env.clientUrl,
+  });
+}
