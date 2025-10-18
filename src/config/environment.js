@@ -13,7 +13,7 @@ const getEnvironmentConfig = () => {
     development: {
       apiUrl: 'http://localhost:5000',
       clientUrl: 'http://localhost:5173',
-      apiPrefix: normalizePrefix(import.meta.env.VITE_API_PREFIX ?? '/api'),
+      apiPrefix: normalizePrefix(import.meta.env.VITE_API_PREFIX ?? ''),
     },
     production: {
       apiUrl:
@@ -23,7 +23,7 @@ const getEnvironmentConfig = () => {
       clientUrl:
         import.meta.env.VITE_CLIENT_URL ??
         'https://pwd-week6-client.vercel.app',
-      apiPrefix: normalizePrefix(import.meta.env.VITE_API_PREFIX ?? '/api'),
+      apiPrefix: normalizePrefix(import.meta.env.VITE_API_PREFIX ?? ''),
     },
   };
 

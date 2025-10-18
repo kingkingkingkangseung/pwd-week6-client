@@ -5,57 +5,77 @@ import { apiUrl, apiPrefix } from '../config/environment';
 // 서버 URL 설정 (환경별 자동 감지)
 const API_BASE_URL = apiUrl;
 
-// 내부 헬퍼: prefix 유무 자동 처리
-const tryWithPrefixFallback = async (method, pathNoPrefix, payload) => {
-  const urlWith = `${apiPrefix}${pathNoPrefix}`;
-  try {
-    return await api[method](urlWith, payload);
-  } catch (err) {
-    const status = err?.response?.status;
-    // 404면 prefix 없는 경로로 재시도
-    if (status === 404) {
-      const urlWithout = `${pathNoPrefix}`;
-      return await api[method](urlWithout, payload);
+// 내부 헬퍼: 경로 후보 목록을 순차 시도
+const requestWithCandidates = async (method, paths, payload) => {
+  let lastError;
+  for (const p of paths) {
+    const candidates = [
+      `${apiPrefix}${p}`,
+      p,
+    ];
+    for (const url of candidates) {
+      try {
+        return await api[method](url, payload);
+      } catch (err) {
+        lastError = err;
+        if (err?.response?.status && err.response.status !== 404) {
+          throw err;
+        }
+      }
     }
-    throw err;
   }
+  throw lastError;
 };
 
 // 인증 관련 API 함수들
 export const authAPIService = {
   // 회원가입
   register: async (userData) => {
-    return await tryWithPrefixFallback('post', '/auth/register', userData);
+    return await requestWithCandidates('post', ['/auth/register', '/users/register', '/register'], userData);
   },
 
   // 로그인
   login: async (credentials) => {
-    return await tryWithPrefixFallback('post', '/auth/login', credentials);
+    return await requestWithCandidates('post', ['/auth/login', '/users/login', '/login'], credentials);
   },
 
   // 로그아웃
   logout: async () => {
-    return await tryWithPrefixFallback('post', '/auth/logout');
+    return await requestWithCandidates('post', ['/auth/logout', '/users/logout', '/logout']);
   },
 
   // 현재 사용자 정보 조회
   getCurrentUser: async () => {
-    return await tryWithPrefixFallback('get', '/auth/me');
+    return await requestWithCandidates('get', ['/auth/me', '/users/me', '/me', '/auth/current-user']);
   },
 
   // OAuth 로그인 URL 생성
-  getGoogleLoginUrl: () => `${API_BASE_URL}${apiPrefix}/auth/google`,
-  getNaverLoginUrl: () => `${API_BASE_URL}${apiPrefix}/auth/naver`,
+  getGoogleLoginUrl: () => {
+    const candidates = [
+      `${API_BASE_URL}${apiPrefix}/auth/google`,
+      `${API_BASE_URL}/auth/google`,
+      `${API_BASE_URL}/oauth/google`,
+    ];
+    return candidates[0];
+  },
+  getNaverLoginUrl: () => {
+    const candidates = [
+      `${API_BASE_URL}${apiPrefix}/auth/naver`,
+      `${API_BASE_URL}/auth/naver`,
+      `${API_BASE_URL}/oauth/naver`,
+    ];
+    return candidates[0];
+  },
 
   // 관리자 전용 API
   // 모든 사용자 목록 조회
   getAllUsers: async () => {
-    return await tryWithPrefixFallback('get', '/users/all');
+    return await requestWithCandidates('get', ['/users/all', '/users']);
   },
 
   // 사용자 유형 변경
   changeUserType: async (userId, userType) => {
-    return await tryWithPrefixFallback('put', `/users/${userId}/type`, { userType });
+    return await requestWithCandidates('put', [`/users/${userId}/type`, `/users/${userId}`], { userType });
   },
 };
 

@@ -10,7 +10,9 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    console.log('API 요청:', config.url);
+    if (import.meta?.env?.DEV) {
+      console.log('API 요청:', config.url);
+    }
     return config;
   },
   (error) => Promise.reject(error),
@@ -19,7 +21,9 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error('API 에러:', error);
+    if (import.meta?.env?.DEV) {
+      console.error('API 에러:', error);
+    }
     return Promise.reject(error);
   },
 );
