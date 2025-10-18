@@ -2,6 +2,7 @@
 const getEnvironmentConfig = () => {
   const isDevelopment = import.meta.env.DEV;
   const isProduction = import.meta.env.PROD;
+  const useProxy = (import.meta.env.VITE_API_PROXY === '1' || import.meta.env.VITE_API_PROXY === 'true');
 
   const normalizePrefix = (p) => {
     if (typeof p !== 'string') return '/api';
@@ -11,15 +12,17 @@ const getEnvironmentConfig = () => {
 
   const config = {
     development: {
-      apiUrl: 'http://localhost:5000',
+      apiUrl: useProxy ? '' : 'http://localhost:5000',
       clientUrl: 'http://localhost:5173',
       apiPrefix: normalizePrefix(import.meta.env.VITE_API_PREFIX ?? '/api'),
     },
     production: {
-      apiUrl:
-        // 우선순위: VITE_API_URL > 기본값
-        import.meta.env.VITE_API_URL ??
-        'https://pwd-week6-server.onrender.com',
+      apiUrl: useProxy
+        ? ''
+        : (
+          // 우선순위: VITE_API_URL > 기본값
+          import.meta.env.VITE_API_URL ?? 'https://pwd-week6-server.onrender.com'
+        ),
       clientUrl:
         import.meta.env.VITE_CLIENT_URL ??
         'https://pwd-week6-client.vercel.app',
