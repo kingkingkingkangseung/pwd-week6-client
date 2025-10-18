@@ -3,10 +3,17 @@ const getEnvironmentConfig = () => {
   const isDevelopment = import.meta.env.DEV;
   const isProduction = import.meta.env.PROD;
 
+  const normalizePrefix = (p) => {
+    if (typeof p !== 'string') return '/api';
+    if (p === '' || p === '/') return '';
+    return p.startsWith('/') ? p : `/${p}`;
+  };
+
   const config = {
     development: {
       apiUrl: 'http://localhost:5000',
       clientUrl: 'http://localhost:5173',
+      apiPrefix: normalizePrefix(import.meta.env.VITE_API_PREFIX ?? '/api'),
     },
     production: {
       apiUrl:
@@ -16,6 +23,7 @@ const getEnvironmentConfig = () => {
       clientUrl:
         import.meta.env.VITE_CLIENT_URL ??
         'https://pwd-week6-client.vercel.app',
+      apiPrefix: normalizePrefix(import.meta.env.VITE_API_PREFIX ?? '/api'),
     },
   };
 
@@ -37,7 +45,7 @@ const env = getEnvironmentConfig();
 export default env;
 
 // Named export
-export const { apiUrl, clientUrl } = env;
+export const { apiUrl, clientUrl, apiPrefix } = env;
 
 // ✅ 개발환경에서만 로그
 if (import.meta.env.DEV) {
@@ -45,5 +53,6 @@ if (import.meta.env.DEV) {
     mode: import.meta.env.MODE,
     apiUrl: env.apiUrl,
     clientUrl: env.clientUrl,
+    apiPrefix: env.apiPrefix,
   });
 }

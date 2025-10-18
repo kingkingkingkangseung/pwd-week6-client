@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { apiUrl } from '../config/environment';
+import { apiUrl, apiPrefix } from '../config/environment';
 
 // 서버 연결 상태 테스트
 export const testConnection = async () => {
@@ -11,7 +11,7 @@ export const testConnection = async () => {
     console.log('✅ 서버 헬스체크 성공:', healthResponse.data);
     
     // 2. API 엔드포인트 테스트
-    const apiResponse = await axios.get(`${apiUrl}/api/restaurants`);
+    const apiResponse = await axios.get(`${apiUrl}${apiPrefix}/restaurants`);
     console.log('✅ API 엔드포인트 테스트 성공:', apiResponse.data);
     
     return {

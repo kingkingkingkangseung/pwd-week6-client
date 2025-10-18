@@ -1,45 +1,61 @@
 // 기존 api.jsx에서 api 인스턴스를 가져와서 사용
 import api from './api';
-import { apiUrl } from '../config/environment';
+import { apiUrl, apiPrefix } from '../config/environment';
 
 // 서버 URL 설정 (환경별 자동 감지)
 const API_BASE_URL = apiUrl;
+
+// 내부 헬퍼: prefix 유무 자동 처리
+const tryWithPrefixFallback = async (method, pathNoPrefix, payload) => {
+  const urlWith = `${apiPrefix}${pathNoPrefix}`;
+  try {
+    return await api[method](urlWith, payload);
+  } catch (err) {
+    const status = err?.response?.status;
+    // 404면 prefix 없는 경로로 재시도
+    if (status === 404) {
+      const urlWithout = `${pathNoPrefix}`;
+      return await api[method](urlWithout, payload);
+    }
+    throw err;
+  }
+};
 
 // 인증 관련 API 함수들
 export const authAPIService = {
   // 회원가입
   register: async (userData) => {
-    return await api.post('/api/auth/register', userData);
+    return await tryWithPrefixFallback('post', '/auth/register', userData);
   },
 
   // 로그인
   login: async (credentials) => {
-    return await api.post('/api/auth/login', credentials);
+    return await tryWithPrefixFallback('post', '/auth/login', credentials);
   },
 
   // 로그아웃
   logout: async () => {
-    return await api.post('/api/auth/logout');
+    return await tryWithPrefixFallback('post', '/auth/logout');
   },
 
   // 현재 사용자 정보 조회
   getCurrentUser: async () => {
-    return await api.get('/api/auth/me');
+    return await tryWithPrefixFallback('get', '/auth/me');
   },
 
   // OAuth 로그인 URL 생성
-  getGoogleLoginUrl: () => `${API_BASE_URL}/api/auth/google`,
-  getNaverLoginUrl: () => `${API_BASE_URL}/api/auth/naver`,
+  getGoogleLoginUrl: () => `${API_BASE_URL}${apiPrefix}/auth/google`,
+  getNaverLoginUrl: () => `${API_BASE_URL}${apiPrefix}/auth/naver`,
 
   // 관리자 전용 API
   // 모든 사용자 목록 조회
   getAllUsers: async () => {
-    return await api.get('/api/users/all');
+    return await tryWithPrefixFallback('get', '/users/all');
   },
 
   // 사용자 유형 변경
   changeUserType: async (userId, userType) => {
-    return await api.put(`/api/users/${userId}/type`, { userType });
+    return await tryWithPrefixFallback('put', `/users/${userId}/type`, { userType });
   },
 };
 
