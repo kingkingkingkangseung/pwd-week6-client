@@ -1,8 +1,10 @@
 import axios from 'axios';
+import { apiUrl } from '../config/environment';
 
 // Axios 인스턴스 생성 (실제 백엔드 연결 시 사용 가능)
 const api = axios.create({
-  baseURL: 'https://jsonplaceholder.typicode.com', // 실습용 기본값
+  // 환경설정의 백엔드 API URL 사용
+  baseURL: apiUrl,
   timeout: 10000,
 });
 

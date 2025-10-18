@@ -10,6 +10,7 @@ const getEnvironmentConfig = () => {
     },
     production: {
       apiUrl:
+        // 우선순위: VITE_API_URL > 기본값
         import.meta.env.VITE_API_URL ??
         'https://pwd-week6-server.onrender.com',
       clientUrl:
