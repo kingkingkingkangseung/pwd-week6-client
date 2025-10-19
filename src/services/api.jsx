@@ -10,6 +10,10 @@ const api = axios.create({
   timeout: 10000,
 });
 
+// JSON 본문 전송 기본 헤더 명시
+api.defaults.headers.post['Content-Type'] = 'application/json';
+api.defaults.headers.put['Content-Type'] = 'application/json';
+
 // 공개 조회 전용 인스턴스: 교차 출처 시 자격증명(쿠키) 제외
 const publicApi = axios.create({
   baseURL: API_BASE_URL,

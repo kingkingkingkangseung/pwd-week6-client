@@ -214,7 +214,7 @@ function LoginPage() {
   const errorFromUrl = searchParams.get('error');
 
   const onSubmit = async (data) => {
-    const result = await login(data);
+    const result = await login(data.email, data.password);
     
     if (result.success) {
       toast.success(result.message);
