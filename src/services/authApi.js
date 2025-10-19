@@ -43,5 +43,15 @@ export const authAPIService = {
   },
 };
 
+// 어댑터: 페이지/컨텍스트에서 사용하는 단순 시그니처 제공
+export const authApi = {
+  getCurrentUser: authAPIService.getCurrentUser,
+  login: (email, password) => authAPIService.login({ email, password }),
+  register: (name, email, password) => authAPIService.register({ name, email, password }),
+  logout: authAPIService.logout,
+  getGoogleAuthUrl: async () => ({ data: { url: authAPIService.getGoogleLoginUrl() } }),
+  getNaverAuthUrl: async () => ({ data: { url: authAPIService.getNaverLoginUrl() } }),
+};
+
 // 기존 api 인스턴스를 authAPI로도 내보내기 (하위 호환성)
 export { api as authAPI };
