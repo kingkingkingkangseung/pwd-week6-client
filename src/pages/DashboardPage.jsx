@@ -164,10 +164,7 @@ function DashboardPage() {
   const { user, logout, isAdmin, checkAuthStatus } = useAuth();
   const navigate = useNavigate();
 
-  // 페이지 로드 시 인증 상태 재확인 (OAuth 리다이렉트 후 필요)
-  useEffect(() => {
-    checkAuthStatus();
-  }, []);
+  // 전역 AuthProvider가 최초 1회 상태를 가져오므로 별도 호출 없음
 
   const handleLogout = async () => {
     await logout();

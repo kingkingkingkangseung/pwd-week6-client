@@ -1,5 +1,5 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { authAPIService } from '../services/authApi';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import { authApi } from '../services/authApi';
 
 const AuthContext = createContext();
 
@@ -13,37 +13,36 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // 앱 시작 시 현재 로그인 상태 확인
-  useEffect(() => {
-    checkAuthStatus();
-  }, []);
-
-  const checkAuthStatus = async () => {
+  const checkAuthStatus = useCallback(async () => {
     try {
-      setLoading(true);
-      const response = await authAPIService.getCurrentUser();
-      if (response.data.success) {
-        setUser(response.data.data.user);
-        setIsAuthenticated(true);
-      }
+      setIsLoading(true);
+      const response = await authApi.getCurrentUser();
+      const ok = response?.data?.success ?? !!(response?.data?.user || response?.data?.data?.user);
+      const u = response?.data?.user || response?.data?.data?.user || null;
+      setUser(u);
+      setIsAuthenticated(!!ok && !!u);
     } catch (error) {
       console.log('로그인 상태 확인 실패:', error);
       setUser(null);
       setIsAuthenticated(false);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  };
+  }, []);
 
-  const login = async (credentials) => {
+  // 앱 시작 시 현재 로그인 상태 확인 (1회)
+  useEffect(() => {
+    checkAuthStatus();
+  }, [checkAuthStatus]);
+
+  const login = async (email, password) => {
     try {
-      const response = await authAPIService.login(credentials);
+      const response = await authApi.login(email, password);
       if (response.data.success) {
-        setUser(response.data.data.user);
-        setIsAuthenticated(true);
+        await checkAuthStatus();
         return { success: true, message: response.data.message };
       }
     } catch (error) {
@@ -52,12 +51,15 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (userData) => {
+  const register = async (userDataOrName, maybeEmail, maybePassword) => {
     try {
-      const response = await authAPIService.register(userData);
+      const isSplitArgs = typeof userDataOrName === 'string' && typeof maybeEmail === 'string';
+      const payload = isSplitArgs 
+        ? { name: userDataOrName, email: maybeEmail, password: maybePassword }
+        : userDataOrName;
+      const response = await authApi.register(payload.name, payload.email, payload.password);
       if (response.data.success) {
-        setUser(response.data.data.user);
-        setIsAuthenticated(true);
+        await checkAuthStatus();
         return { success: true, message: response.data.message };
       }
     } catch (error) {
@@ -68,7 +70,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await authAPIService.logout();
+      await authApi.logout();
     } catch (error) {
       console.log('로그아웃 요청 실패:', error);
     } finally {
@@ -85,7 +87,8 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     isAuthenticated,
-    loading,
+    isLoading,
+    loading: isLoading, // 하위 호환
     login,
     register,
     logout,
