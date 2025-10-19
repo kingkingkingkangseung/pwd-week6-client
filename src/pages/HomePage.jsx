@@ -1,4 +1,3 @@
-/* src/pages/HomePage.jsx */
 import React from 'react';
 import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';
@@ -67,17 +66,17 @@ function HomePage() {
           <p>카테고리별로 맛집을 찾아보세요</p>
         </Card>
         
+        <Card to="/submit">
+          <FaUtensils />
+          <h3>맛집 제보하기</h3>
+          <p>새로운 맛집을 알려주세요</p>
+        </Card>
         <Card to="/popular">
           <FaStar />
           <h3>인기 맛집 TOP</h3>
           <p>이번 주 가장 인기있는 맛집</p>
         </Card>
         
-        <Card to="/submit">
-          <FaUtensils />
-          <h3>맛집 제보하기</h3>
-          <p>새로운 맛집을 알려주세요</p>
-        </Card>
       </CardGrid>
     </HomeContainer>
   );

@@ -1,49 +1,63 @@
-import axios from 'axios';
-import { apiUrl, apiPrefix } from '../config/environment';
+// 연결 테스트 유틸리티
+import { apiUrl } from '../config/environment';
 
-// 서버 연결 상태 테스트
 export const testConnection = async () => {
   try {
-    console.log('🔍 서버 연결 테스트 시작...');
+    console.log('🔍 Testing connection to:', apiUrl);
     
-    // 1. 헬스체크
-    const healthResponse = await axios.get(`${apiUrl}/health`);
-    console.log('✅ 서버 헬스체크 성공:', healthResponse.data);
+    const response = await fetch(`${apiUrl}/health`, {
+      method: 'GET',
+      mode: 'cors',
+      credentials: 'include',
+    });
     
-    // 2. API 엔드포인트 테스트
-    const apiResponse = await axios.get(`${apiUrl}${apiPrefix}/restaurants`);
-    console.log('✅ API 엔드포인트 테스트 성공:', apiResponse.data);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
     
-    return {
-      success: true,
-      message: '서버 연결이 정상입니다.',
-      data: {
-        health: healthResponse.data,
-        api: apiResponse.data
-      }
-    };
+    const data = await response.json();
+    console.log('✅ Connection successful:', data);
+    return { success: true, data };
+    
   } catch (error) {
-    console.error('❌ 서버 연결 실패:', error);
-    return {
-      success: false,
-      message: '서버 연결에 실패했습니다.',
-      error: error.message
+    console.error('❌ Connection failed:', error);
+    return { 
+      success: false, 
+      error: error.message,
+      apiUrl 
     };
   }
 };
 
-// 특정 엔드포인트 테스트
-export const testEndpoint = async (endpoint) => {
-  try {
-    const response = await axios.get(`${apiUrl}${endpoint}`);
-    return {
-      success: true,
-      data: response.data
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error.message
-    };
+export const testApiEndpoints = async () => {
+  const endpoints = [
+    '/api/restaurants',
+    '/api/auth/me'
+  ];
+  
+  const results = {};
+  
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetch(`${apiUrl}${endpoint}`, {
+        method: 'GET',
+        mode: 'cors',
+        credentials: 'include',
+      });
+      
+      results[endpoint] = {
+        status: response.status,
+        ok: response.ok,
+        statusText: response.statusText
+      };
+      
+    } catch (error) {
+      results[endpoint] = {
+        error: error.message
+      };
+    }
   }
+  
+  console.log('🔍 API Endpoints Test Results:', results);
+  return results;
 };

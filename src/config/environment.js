@@ -1,36 +1,22 @@
-// src/config/environment.js
+// 환경별 설정 관리
 const getEnvironmentConfig = () => {
   const isDevelopment = import.meta.env.DEV;
   const isProduction = import.meta.env.PROD;
-  const useProxy = (import.meta.env.VITE_API_PROXY === '1' || import.meta.env.VITE_API_PROXY === 'true');
-
-  const normalizePrefix = (p) => {
-    if (typeof p !== 'string') return '/api';
-    if (p === '' || p === '/') return '';
-    return p.startsWith('/') ? p : `/${p}`;
-  };
-
+  
+  // 기본 설정
   const config = {
     development: {
-      apiUrl: useProxy ? '' : 'http://localhost:5000',
+      apiUrl: 'http://localhost:3001',
       clientUrl: 'http://localhost:5173',
-      apiPrefix: normalizePrefix(import.meta.env.VITE_API_PREFIX ?? '/api'),
     },
     production: {
-      apiUrl: useProxy
-        ? ''
-        : (
-          // 우선순위: VITE_API_URL > 기본값
-          import.meta.env.VITE_API_URL ?? 'https://pwd-week6-server.onrender.com'
-        ),
-      clientUrl:
-        import.meta.env.VITE_CLIENT_URL ??
-        'https://pwd-week6-client.vercel.app',
-      apiPrefix: normalizePrefix(import.meta.env.VITE_API_PREFIX ?? '/api'),
-    },
+      // 환경변수에서 URL 가져오기, 없으면 기본값 사용
+      apiUrl: import.meta.env.VITE_API_URL || 'https://pwd-week6-server.onrender.com',
+      clientUrl: import.meta.env.VITE_CLIENT_URL || 'https://pwd-week6-client.vercel.app',
+    }
   };
 
-  // 환경변수가 있을 경우 우선 적용
+  // 환경변수가 있으면 우선 사용
   if (import.meta.env.VITE_API_URL) {
     config.development.apiUrl = import.meta.env.VITE_API_URL;
     config.production.apiUrl = import.meta.env.VITE_API_URL;
@@ -45,17 +31,19 @@ const getEnvironmentConfig = () => {
 };
 
 const env = getEnvironmentConfig();
+
 export default env;
 
-// Named export
-export const { apiUrl, clientUrl, apiPrefix } = env;
+// 개별 export
+export const { apiUrl, clientUrl } = env;
 
-// ✅ 개발환경에서만 로그
-if (import.meta.env.DEV) {
-  console.log('🌍 Environment Config:', {
-    mode: import.meta.env.MODE,
-    apiUrl: env.apiUrl,
-    clientUrl: env.clientUrl,
-    apiPrefix: env.apiPrefix,
-  });
-}
+// 디버깅용
+console.log('🌍 Environment Config:', {
+  mode: import.meta.env.MODE,
+  dev: import.meta.env.DEV,
+  prod: import.meta.env.PROD,
+  apiUrl: env.apiUrl,
+  clientUrl: env.clientUrl,
+  viteApiUrl: import.meta.env.VITE_API_URL,
+  viteClientUrl: import.meta.env.VITE_CLIENT_URL
+});

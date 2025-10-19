@@ -1,8 +1,9 @@
-/* src/components/SubmitRestaurant.jsx */
+
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { toast } from 'react-toastify';
+import { submissionAPI } from '../services/api';
 import { FaCheckCircle } from 'react-icons/fa';
 
 const FormContainer = styled.div`
@@ -125,22 +126,31 @@ function SubmitRestaurant() {
 
   const onSubmit = async (data) => {
     try {
-      // Netlify Forms로 제출
-      const response = await fetch("/", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          "form-name": "restaurant-submit",
-          ...data
-        }).toString()
-      });
-      
-      if (response.ok) {
-        setSubmitted(true);
-        toast.success('맛집이 성공적으로 제보되었습니다! 🎉');
-        reset();
-        setTimeout(() => setSubmitted(false), 5000);
-      }
+      const recommendedMenuArray = typeof data.recommendedMenu === 'string'
+        ? data.recommendedMenu
+            .split(/[\n,]/)
+            .map((item) => item.trim())
+            .filter(Boolean)
+        : Array.isArray(data.recommendedMenu)
+          ? data.recommendedMenu
+          : [];
+
+      const payload = {
+        restaurantName: data.restaurantName?.trim(),
+        category: data.category,
+        location: data.location?.trim(),
+        priceRange: data.priceRange?.trim() || undefined,
+        recommendedMenu: recommendedMenuArray.length ? recommendedMenuArray : undefined,
+        review: data.review?.trim() || undefined,
+        submitterName: data.submitterName?.trim() || undefined,
+        submitterEmail: data.submitterEmail?.trim() || undefined,
+      };
+
+      await submissionAPI.createSubmission(payload);
+      setSubmitted(true);
+      toast.success('맛집이 성공적으로 제보되었습니다! 🎉');
+      reset();
+      setTimeout(() => setSubmitted(false), 5000);
     } catch (error) {
       toast.error('제출 중 오류가 발생했습니다.');
     }
@@ -166,7 +176,6 @@ function SubmitRestaurant() {
       <FormTitle>🍽️ 새로운 맛집 제보하기</FormTitle>
       
       <form onSubmit={handleSubmit(onSubmit)}>
-        <input type="hidden" name="form-name" value="restaurant-submit" />
         
         <FormGroup>
           <Label htmlFor="restaurantName">맛집 이름 *</Label>
@@ -237,6 +246,7 @@ function SubmitRestaurant() {
           />
         </FormGroup>
 
+        
         <FormGroup>
           <Label htmlFor="review">한줄평</Label>
           <Textarea

@@ -1,59 +1,97 @@
-// src/contexts/AuthContext.jsx
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { authAPIService } from '../services/authApi';
 
 const AuthContext = createContext();
 
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth는 AuthProvider 내에서 사용되어야 합니다.');
+  }
+  return context;
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // ✅ Axios 인스턴스
-  const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL || 'https://pwd-week6-server-36mc.onrender.com/api',
-    withCredentials: true, // ✅ 세션 쿠키 포함
-  });
-
-  // ✅ 로그인 상태 확인
-  const checkAuthStatus = async () => {
-    setIsLoading(true);
-    try {
-      const res = await api.get('/auth/me');
-      if (res.data?.authenticated) {
-        setUser(res.data.user);
-      } else {
-        setUser(null);
-      }
-    } catch (err) {
-      setUser(null);
-    } finally {
-      setIsLoading(false); // ✅ 이거 없으면 Dashboard 무한 로딩
-    }
-  };
-
-  // ✅ 로그아웃
-  const logout = async () => {
-    try {
-      await api.post('/auth/logout');
-      setUser(null);
-    } catch (err) {
-      console.error('Logout failed:', err);
-    }
-  };
-
-  // ✅ 관리자 여부 판단
-  const isAdmin = () => user?.userType === 'admin';
-
+  // 앱 시작 시 현재 로그인 상태 확인
   useEffect(() => {
     checkAuthStatus();
   }, []);
 
-  return (
-    <AuthContext.Provider value={{ user, isLoading, checkAuthStatus, logout, isAdmin }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
+  const checkAuthStatus = async () => {
+    try {
+      setLoading(true);
+      const response = await authAPIService.getCurrentUser();
+      if (response.data.success) {
+        setUser(response.data.data.user);
+        setIsAuthenticated(true);
+      }
+    } catch (error) {
+      console.log('로그인 상태 확인 실패:', error);
+      setUser(null);
+      setIsAuthenticated(false);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-// ✅ useAuth 훅
-export const useAuth = () => useContext(AuthContext);
+  const login = async (credentials) => {
+    try {
+      const response = await authAPIService.login(credentials);
+      if (response.data.success) {
+        setUser(response.data.data.user);
+        setIsAuthenticated(true);
+        return { success: true, message: response.data.message };
+      }
+    } catch (error) {
+      const message = error.response?.data?.message || '로그인에 실패했습니다.';
+      return { success: false, message };
+    }
+  };
+
+  const register = async (userData) => {
+    try {
+      const response = await authAPIService.register(userData);
+      if (response.data.success) {
+        setUser(response.data.data.user);
+        setIsAuthenticated(true);
+        return { success: true, message: response.data.message };
+      }
+    } catch (error) {
+      const message = error.response?.data?.message || '회원가입에 실패했습니다.';
+      return { success: false, message };
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await authAPIService.logout();
+    } catch (error) {
+      console.log('로그아웃 요청 실패:', error);
+    } finally {
+      setUser(null);
+      setIsAuthenticated(false);
+    }
+  };
+
+  // 관리자 권한 확인 함수
+  const isAdmin = () => {
+    return user && user.userType === 'admin';
+  };
+
+  const value = {
+    user,
+    isAuthenticated,
+    loading,
+    login,
+    register,
+    logout,
+    checkAuthStatus,
+    isAdmin,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};

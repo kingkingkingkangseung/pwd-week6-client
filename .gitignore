@@ -22,3 +22,22 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# Vercel
+.vercel
+
+# Build/Test artifacts
+coverage
+.nyc_output
+.vite
+
+# OS generated
+Thumbs.db
+
+.claude/
+README.MD

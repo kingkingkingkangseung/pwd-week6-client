@@ -1,10 +1,8 @@
-/* src/components/Header.jsx */
 import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { Link, useLocation } from 'react-router-dom';
 import styled from '@emotion/styled';
-import { FaHome, FaList, FaFire, FaPlus, FaUser, FaSignOutAlt, FaCrown } from 'react-icons/fa';
-import { toast } from 'react-toastify';
+import { FaHome, FaList, FaFire, FaPlus, FaUser, FaSignInAlt, FaUserPlus, FaSignOutAlt } from 'react-icons/fa';
+import { useAuth } from '../contexts/AuthContext';
 
 const HeaderContainer = styled.header`
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -12,91 +10,39 @@ const HeaderContainer = styled.header`
   padding: 1rem;
 `;
 
-const HeaderTop = styled.div`
+const HeaderContent = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+`;
+
+const Title = styled.h1`
+  text-align: center;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  
+  @media (max-width: 768px) {
+    font-size: 1.25rem;
+  }
+`;
+
+const NavContainer = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  gap: 1rem;
+  flex-wrap: wrap;
 `;
 
-const Logo = styled.h1`
-  margin: 0;
-  font-size: 1.5rem;
+const Nav = styled.nav`
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 `;
 
 const UserSection = styled.div`
   display: flex;
   align-items: center;
-  gap: 1rem;
-`;
-
-const UserInfo = styled.div`
-  display: flex;
-  align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 20px;
-`;
-
-const UserAvatar = styled.div`
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9rem;
-  font-weight: bold;
-`;
-
-const UserName = styled.span`
-  font-size: 0.9rem;
-`;
-
-const AuthButtons = styled.div`
-  display: flex;
-  gap: 0.5rem;
-`;
-
-const AuthButton = styled(Link)`
-  padding: 0.5rem 1rem;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  text-decoration: none;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  transition: background 0.3s;
-  
-  &:hover {
-    background: rgba(255, 255, 255, 0.3);
-  }
-`;
-
-const LogoutButton = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: rgba(255, 107, 107, 0.8);
-  color: white;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: background 0.3s;
-  
-  &:hover {
-    background: rgba(255, 107, 107, 1);
-  }
-`;
-
-const Nav = styled.nav`
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  flex-wrap: wrap;
 `;
 
 const NavLink = styled(Link)`
@@ -106,8 +52,7 @@ const NavLink = styled(Link)`
   padding: 0.5rem 1rem;
   border-radius: 20px;
   transition: background 0.3s;
-  text-decoration: none;
-  color: white;
+  white-space: nowrap;
   
   &:hover {
     background: rgba(255, 255, 255, 0.2);
@@ -118,96 +63,110 @@ const NavLink = styled(Link)`
   }
 `;
 
-const AdminBadge = styled.span`
-  display: inline-flex;
+const UserInfo = styled.div`
+  display: flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  background: #ff6b6b;
-  border-radius: 10px;
-  font-size: 0.75rem;
-  margin-left: 0.5rem;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+const UserAvatar = styled.img`
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+`;
+
+const LogoutButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.3s;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
 `;
 
 function Header() {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { user, isAuthenticated, logout, isAdmin } = useAuth();
+  const { user, isAuthenticated, logout, loading } = useAuth();
 
   const isActive = (path) => {
-    return location.pathname === path ? 'active' : '';
+    if (path === '/' && location.pathname === '/') return 'active';
+    if (path !== '/' && location.pathname.startsWith(path)) return 'active';
+    return '';
   };
 
   const handleLogout = async () => {
-    try {
-      await logout();
-      toast.success('로그아웃되었습니다.');
-      navigate('/');
-    } catch (error) {
-      toast.error('로그아웃 중 오류가 발생했습니다.');
-    }
+    await logout();
   };
 
   return (
     <HeaderContainer>
-      <HeaderTop>
-        <Logo>Ajou Campus Foodmap</Logo>
-        
-        <UserSection>
-          {isAuthenticated ? (
-            <>
-              <UserInfo>
-                <UserAvatar>
-                  {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-                </UserAvatar>
-                <UserName>{user?.name}</UserName>
-                {isAdmin() && (
-                  <AdminBadge>
-                    <FaCrown />
-                    Admin
-                  </AdminBadge>
-                )}
-              </UserInfo>
-              <LogoutButton onClick={handleLogout}>
-                <FaSignOutAlt />
-                로그아웃
-              </LogoutButton>
-            </>
-          ) : (
-            <AuthButtons>
-              <AuthButton to="/login">로그인</AuthButton>
-              <AuthButton to="/register">회원가입</AuthButton>
-            </AuthButtons>
-          )}
-        </UserSection>
-      </HeaderTop>
+      <HeaderContent>
+        <Title>Ajou Campus Foodmap</Title>
+        <NavContainer>
+          <Nav>
+            <NavLink to="/" className={isActive('/')}>
+              <FaHome /> Home
+            </NavLink>
+            <NavLink to="/list" className={isActive('/list')}>
+              <FaList /> 맛집 목록
+            </NavLink>
+            <NavLink to="/popular" className={isActive('/popular')}>
+              <FaFire /> 인기 맛집
+            </NavLink>
+            {isAuthenticated && (
+              <NavLink to="/submit" className={isActive('/submit')}>
+                <FaPlus /> 맛집 제보
+              </NavLink>
+            )}
+          </Nav>
 
-      <Nav>
-        <NavLink to="/" className={isActive('/')}>
-          <FaHome /> Home
-        </NavLink>
-        <NavLink to="/list" className={isActive('/list')}>
-          <FaList /> List
-        </NavLink>
-        <NavLink to="/popular" className={isActive('/popular')}>
-          <FaFire /> Popular Top 5
-        </NavLink>
-        {isAuthenticated && (
-          <NavLink to="/submit" className={isActive('/submit')}>
-            <FaPlus /> Submit
-          </NavLink>
-        )}
-        {isAuthenticated && (
-          <NavLink to="/dashboard" className={isActive('/dashboard')}>
-            <FaUser /> Dashboard
-          </NavLink>
-        )}
-        {isAdmin() && (
-          <NavLink to="/admin" className={isActive('/admin')}>
-            <FaCrown /> Admin
-          </NavLink>
-        )}
-      </Nav>
+          <UserSection>
+            {loading ? (
+              <div style={{ padding: '0.5rem 1rem' }}>로딩중...</div>
+            ) : isAuthenticated ? (
+              <>
+                {user && (
+                  <UserInfo>
+                    {user.avatar && <UserAvatar src={user.avatar} alt={user.name} />}
+                    <span>{user.name}님</span>
+                  </UserInfo>
+                )}
+                <NavLink to="/dashboard" className={isActive('/dashboard')}>
+                  <FaUser /> 대시보드
+                </NavLink>
+                <LogoutButton onClick={handleLogout}>
+                  <FaSignOutAlt /> 로그아웃
+                </LogoutButton>
+              </>
+            ) : (
+              <>
+                <NavLink to="/login" className={isActive('/login')}>
+                  <FaSignInAlt /> 로그인
+                </NavLink>
+                <NavLink to="/register" className={isActive('/register')}>
+                  <FaUserPlus /> 회원가입
+                </NavLink>
+              </>
+            )}
+          </UserSection>
+        </NavContainer>
+      </HeaderContent>
     </HeaderContainer>
   );
 }

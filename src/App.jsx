@@ -1,12 +1,12 @@
-/* src/App.jsx */
-import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './App.css';
+import { testConnection } from './utils/connectionTest';
 
-// Context Providers
+// Context
 import { AuthProvider } from './contexts/AuthContext';
 
 // Pages
@@ -14,12 +14,12 @@ import HomePage from './pages/HomePage';
 import ListPage from './pages/ListPage';
 import DetailPage from './pages/DetailPage';
 import PopularPage from './pages/PopularPage';
+import AdminPage from './pages/AdminPage';
+import SubmissionsPage from './pages/SubmissionsPage';
 import SubmitPage from './pages/SubmitPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
-import AdminPage from './pages/AdminPage';
-import SubmissionsPage from './pages/SubmissionsPage';
 
 // Components
 import Header from './components/Header';
@@ -29,9 +29,6 @@ import AdminRoute from './components/AdminRoute';
 
 // Styles
 import GlobalStyles from './styles/GlobalStyles';
-
-// Utils
-import { testConnection } from './utils/connectionTest';
 
 // React Query Client 생성
 const queryClient = new QueryClient({
@@ -44,17 +41,15 @@ const queryClient = new QueryClient({
 });
 
 function App() {
-  // 개발 환경에서 서버 연결 테스트
-  React.useEffect(() => {
-    if (import.meta.env.NODE_ENV === 'development') {
-      testConnection();
-    }
+  // 앱 시작 시 연결 테스트
+  useEffect(() => {
+    testConnection();
   }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <BrowserRouter>
+        <HashRouter>
           <GlobalStyles />
           <div className="app">
             <Header />
@@ -69,28 +64,38 @@ function App() {
                 <Route path="/register" element={<RegisterPage />} />
                 
                 {/* 보호된 라우트 (로그인 필요) */}
-                <Route path="/dashboard" element={
-                  <ProtectedRoute>
-                    <DashboardPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="/submit" element={
-                  <ProtectedRoute>
-                    <SubmitPage />
-                  </ProtectedRoute>
-                } />
-                
-                {/* 관리자 전용 라우트 */}
-                <Route path="/admin" element={
-                  <AdminRoute>
-                    <AdminPage />
-                  </AdminRoute>
-                } />
-                <Route path="/submissions" element={
-                  <AdminRoute>
-                    <SubmissionsPage />
-                  </AdminRoute>
-                } />
+                <Route 
+                  path="/dashboard" 
+                  element={
+                    <ProtectedRoute>
+                      <DashboardPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/submit" 
+                  element={
+                    <ProtectedRoute>
+                      <SubmitPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin" 
+                  element={
+                    <AdminRoute>
+                      <AdminPage />
+                    </AdminRoute>
+                  } 
+                />
+                <Route 
+                  path="/submissions" 
+                  element={
+                    <AdminRoute>
+                      <SubmissionsPage />
+                    </AdminRoute>
+                  } 
+                />
                 
                 {/* 404 페이지 */}
                 <Route path="*" element={<NotFound />} />
@@ -112,7 +117,7 @@ function App() {
             pauseOnHover
             theme="light"
           />
-        </BrowserRouter>
+        </HashRouter>
       </AuthProvider>
     </QueryClientProvider>
   );

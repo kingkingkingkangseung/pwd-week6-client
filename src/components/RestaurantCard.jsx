@@ -1,4 +1,4 @@
-/* src/components/RestaurantCard.jsx */
+// src/components/RestaurantCard.js
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import styled from '@emotion/styled';

@@ -161,7 +161,7 @@ const AvatarPlaceholder = styled.div`
 `;
 
 function DashboardPage() {
-  const { user, logout, isAdmin, checkAuthStatus, isLoading } = useAuth();
+  const { user, logout, isAdmin, checkAuthStatus } = useAuth();
   const navigate = useNavigate();
 
   // 페이지 로드 시 인증 상태 재확인 (OAuth 리다이렉트 후 필요)
@@ -170,12 +170,9 @@ function DashboardPage() {
   }, []);
 
   const handleLogout = async () => {
-    try {
-      await logout();
-    } finally {
-      // 하드 리프레시로 세션 상태 반영
-      window.location.href = '/login';
-    }
+    await logout();
+    toast.success('로그아웃되었습니다.');
+    navigate('/', { replace: true });
   };
 
   const formatDate = (dateString) => {
@@ -199,12 +196,8 @@ function DashboardPage() {
     }
   };
 
-  // 전역 로딩 중에는 중복 호출을 피하고 깔끔하게 대기
-  if (isLoading) {
-    return <div>인증 상태 확인 중...</div>;
-  }
   if (!user) {
-    return <div>로그인이 필요합니다.</div>;
+    return <div>사용자 정보를 불러오는 중...</div>;
   }
 
   return (
